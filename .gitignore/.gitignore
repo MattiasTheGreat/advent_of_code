@@ -30,3 +30,13 @@
 *.exe
 *.out
 *.app
+
+# Visual Studio
+*.vxcproj
+*.suo
+*.db
+*.opendb
+*.ipch
+*.sln
+*.log
+*.tlog
