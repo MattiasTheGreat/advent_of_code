@@ -48,6 +48,7 @@ void bigPrint(array<array < char, WIDTH >*, DEPTH>* slice, int x, int  y) {
 
 //Values are: bool = any branch reached bottom? int = number of waters in branch
 pair<bool, int> fillWater(int x, int y, array<array < char, WIDTH >*, DEPTH>* slice) {
+	bigPrint( slice, x, y);
 	if(y == DEPTH - 1){
 		slice->at(y)->at(x) = '~';
 		//printSlice(slice);
@@ -364,7 +365,7 @@ void seventeenth_day_func() {
 		int delves;
 		};
 
-	Delver delly{ 500 - WIDTH_START, 1, 'v', false, 0};
+	Delver delly{ 498 - WIDTH_START, 1, 'v', false, 0};
 
 	int stopMotion = 0;
 	while (delly.x != 500 - WIDTH_START || delly.y != 0) {
@@ -398,11 +399,25 @@ void seventeenth_day_func() {
 				}
 			}
 			else if (current == '<') {
-				delly.x++;
+				cout << "backing up into >" << endl;
+				system("pause");
+				if (delly.x < WIDTH - 1 && slice->at(y)->at(x - 1) == '.') {
+					delly.x--;
+					delly.mode = '>';
+				}
+				else
+					delly.x++;
 
 			}
 			else if (current == '>') {
-				delly.x--;
+				cout << "backing up into >" << endl;
+				system("pause");
+				if (delly.x > 0 && slice->at(y)->at(x + 1) == '.') {
+					delly.x++;
+					delly.mode = '>';
+				}
+				else
+					delly.x--;
 			}
 			else {
 				cout << "Unspecified mode, delvy confused\n";
@@ -458,7 +473,7 @@ void seventeenth_day_func() {
 		stopMotion++;
 	}
 	cout << "delves: " << delly.delves << endl;
-
+	
 	//25804 too low
 	
 }
