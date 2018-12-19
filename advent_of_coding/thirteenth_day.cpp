@@ -2,17 +2,18 @@
 
 using namespace std;
 
-/*
 
-bool cartComparator::operator()(const tuple<int, int, Turn, Direction, Updated>* lhs, const tuple<int, int, Turn, Direction, Updated>* rhs) const {
+bool cartComparator::operator()(
+	const tuple<int, int, Turn, Direction, Crashed, Rail>* lhs,
+	const tuple<int, int, Turn, Direction, Crashed, Rail>* rhs) const{
+
 	if (get<1>(*lhs) == get<1>(*rhs))
-		return get<0>(*lhs) < get<0>(*rhs);
+	return get<0>(*lhs) < get<0>(*rhs);
 	else
-		return get<1>(*lhs) < get<1>(*rhs);
-
+	return get<1>(*lhs) < get<1>(*rhs);
 }
 
-void replaceCart(vector<string*>& map, int x, int y) {
+char cartCurrentRail(vector<string*>& map, int x, int y) {
 	char up, right, down, left;
 
 	if (x == 0)
@@ -38,41 +39,45 @@ void replaceCart(vector<string*>& map, int x, int y) {
 	if (up == '|' || up == '+' || up == '\\' || up == '/')
 		if (down == '|' || down == '+' || down == '\\' || down == '/')
 			if (right == '-' || right == '+' || right == '\\' || right == '/')
-				map.at(y)->at(x) = '+';
+				return '+';
+				//map.at(y)->at(x) = '+';
 			else
-				map.at(y)->at(x) = '|';
+				return '|';
+				//map.at(y)->at(x) = '|';
 		else if (right == '-' || right == '+' || right == '\\' || right == '/')
-			map.at(y)->at(x) = '\\';
+			return '\\';
+			//map.at(y)->at(x) = '\\';
 		else
-			map.at(y)->at(x) = '/';
+			return '/';
+			//map.at(y)->at(x) = '/';
 	else
-		map.at(y)->at(x) = '-';
+		return '-';
+		//map.at(y)->at(x) = '-';
 }
 
-set<tuple<int, int, Turn, Direction, Updated>*, cartComparator>* findCarts(vector<string*>& map) {
-	set<tuple<int, int, Turn, Direction, Updated>*, cartComparator>* retVal = new set<tuple<int, int, Turn, Direction, Updated>*, cartComparator>;
+
+
+set<tuple<int, int, Turn, Direction, Crashed, Rail>*, struct cartComparator>* findCarts(vector<string*>& map) {
+	set<tuple<int, int, Turn, Direction, Crashed, Rail>*, struct cartComparator>* retVal = new set<tuple<int, int, Turn, Direction, Crashed, Rail>*, struct cartComparator>;
 	for (int y = 0; y < map.size(); ++y) {
 		string* row = map.at(y);
 		for (int x = 0; x < row->size(); ++x) {
 			if (row->at(x) == '^') {
 				//cout << "^" << endl;
-				replaceCart(map, x, y);
-				retVal->insert(new tuple<int, int, Turn, Direction, Updated>{ x, y, -1, 0, false });
+				
+				retVal->insert(new tuple<int, int, Turn, Direction, Crashed, Rail>{ x, y, -1, 0, false, cartCurrentRail(map, x, y) });
 			}
 			if (row->at(x) == '>') {
 				//cout << ">" << endl;
-				replaceCart(map, x, y);
-				retVal->insert(new tuple<int, int, Turn, Direction, Updated>{ x, y, -1, 1, false });
+				retVal->insert(new tuple<int, int, Turn, Direction, Crashed, Rail>{ x, y, -1, 1, false, cartCurrentRail(map, x, y) });
 			}
 			if (row->at(x) == 'v') {
 				//cout << "v" << endl;
-				replaceCart(map, x, y);
-				retVal->insert(new tuple<int, int, Turn, Direction, Updated>{ x, y, -1, 2, false });
+				retVal->insert(new tuple<int, int, Turn, Direction, Crashed, Rail>{ x, y, -1, 2, false, cartCurrentRail(map, x, y) });
 			}
 			if (row->at(x) == '<') {
 				//cout << "<" << endl;
-				replaceCart(map, x, y);
-				retVal->insert(new tuple<int, int, Turn, Direction, Updated>{ x, y, -1, 3, false });
+				retVal->insert(new tuple<int, int, Turn, Direction, Crashed, Rail>{ x, y, -1, 3, false, cartCurrentRail(map, x, y) });
 			}
 
 
@@ -82,109 +87,110 @@ set<tuple<int, int, Turn, Direction, Updated>*, cartComparator>* findCarts(vecto
 	return retVal;
 }
 
-bool isCollision(set<tuple<int, int, Turn, Direction, Updated>*, cartComparator>* carts, int x, int y) {
-	int overlap = 0;
-	for (auto it = carts->begin(); it != carts->end(); it++) {
-		auto& cartX = get<0>(*(*it));
-		auto& cartY = get<1>(*(*it));
-		if (cartX == x && cartY == y) {
-			overlap++;
-			if (overlap == 2)
-				return true;
+vector<pair<int, int>*>* tick(set<tuple<int, int, Turn, Direction, Crashed, Rail>*,struct cartComparator>* carts, vector<string*>& map) {
+	vector<pair< int, int>*>* collisions = new vector<pair< int, int>*>;
+
+	for (auto cart : (*carts)) {
+		auto& cartX = get<0>(*cart);
+		auto& cartY = get<1>(*cart);
+		Turn& turn = get<2>(*cart);
+		Direction& dir = get<3>(*cart);
+		Crashed& crashed = get<4>(*cart);
+		Rail& currentRail = get<5>(*cart);
+				
+		map.at(cartY)->at(cartX) = currentRail;
+		if (dir == 0) {
+			cartY--;
+		}
+		if (dir == 1) {
+			cartX++;
+		}
+		if (dir == 2) {
+			cartY++;
+		}
+		if (dir == 3) {
+			cartX--;
 		}
 
-	}
-	return false;
-}
-
-vector<tuple<Collision, int, int>*>* tick(set<tuple<int, int, Turn, Direction, Updated>*, cartComparator>* carts, vector<string*> map) {
-	vector<tuple<Collision, int, int>*>* collisions = new vector<tuple<Collision, int, int>*>;
-	for (int y = 0; y < map.size(); ++y) {
-		string row = *map.at(y);
-		for (int x = 0; x < row.size(); ++x) {
-			for (auto cart : (*carts)) {
-				auto& cartX = get<0>(*cart);
-				auto& cartY = get<1>(*cart);
-				Turn& turn = get<2>(*cart);
-				Direction& dir = get<3>(*cart);
-				Updated& updated = get<4>(*cart);
-				if (cartX == x && cartY == y && !updated) {
-					updated = true;
-					//cout << "x was " << cartX << " and y was " << cartY << endl;
-					if (dir == 0) {
-						cartY--;
-					}
-					if (dir == 1) {
-						cartX++;
-					}
-					if (dir == 2) {
-						cartY++;
-					}
-					if (dir == 3) {
-						cartX--;
-					}
-					char rail = map.at(cartY)->at(cartX);
-					//cout << "x is " << cartX << " and y is " << cartY << endl;
-					if (isCollision(carts, cartX, cartY)) {
-						cout << "COLLISION\n";
-						collisions->push_back(new tuple<Collision, int, int>{ true,cartX,cartY });
-						for (auto crasher : (*carts))
-							if (get<0>(*crasher) == cartX && get<1>(*crasher) == cartY) {
-								get<4>(*crasher) = true;
-								cout << "pausing cart at:" << cartX << "," << cartY << endl;
-							}
-					}
-					if (rail == '+') {
-						dir += turn;
-						if (dir > 3)
-							dir = 0;
-						else if (dir < 0)
-							dir = 3;
-						turn++;
-						if (turn == 2)
-							turn = -1;
-					}
-					else if (rail == '\\') {
-						if (dir == 3)
-							dir = 0;
-						else if (dir == 2)
-							dir = 1;
-						else if (dir == 1)
-							dir = 2;
-						else if (dir == 0)
-							dir = 3;
-						else
-							cout << "Something went terribly wrong in a \\ turn" << endl;
-					}
-					else if (rail == '/') {
-						if (dir == 0)
-							dir = 1;
-						else if (dir == 1)
-							dir = 0;
-						else if (dir == 2) {
-							dir = 3;
-						}
-						else if (dir == 3)
-							dir = 2;
-						else
-							cout << "Something went terribly wrong in a / turn" << endl;
-					}
-
+		currentRail = map.at(cartY)->at(cartX);
+		
+		if (currentRail == '^' || currentRail == '>' || currentRail == 'v' || currentRail == '<') {
+			crashed = true;
+			collisions->push_back(new pair< int, int>{cartX,cartY });
+			for (auto crasher : (*carts))
+				if (get<0>(*crasher) == cartX && get<1>(*crasher) == cartY) {
+					get<4>(*crasher) = true;
+					//cout << "pausing cart at:" << cartX << "," << cartY << endl;
 				}
+		}
+		else {
+			if (currentRail == '+') {
+				dir += turn;
+				if (dir > 3)
+					dir = 0;
+				else if (dir < 0)
+					dir = 3;
+				turn++;
+				if (turn == 2)
+					turn = -1;
 			}
+			else if (currentRail == '\\') {
+				if (dir == 3)
+					dir = 0;
+				else if (dir == 2)
+					dir = 1;
+				else if (dir == 1)
+					dir = 2;
+				else if (dir == 0)
+					dir = 3;
+				else
+					cout << "Something went terribly wrong in a \\ turn" << endl;
+			}
+			else if (currentRail == '/') {
+				if (dir == 0)
+					dir = 1;
+				else if (dir == 1)
+					dir = 0;
+				else if (dir == 2) {
+					dir = 3;
+				}
+				else if (dir == 3)
+					dir = 2;
+				else
+					cout << "Something went terribly wrong in a / turn" << endl;
+			}
+			if (dir == 0)
+				map.at(cartY)->at(cartX) = '^';
+			else if (dir == 1)
+				map.at(cartY)->at(cartX) = '>';
+			else if (dir == 2)
+				map.at(cartY)->at(cartX) = 'v';
+			else if (dir == 3)
+				map.at(cartY)->at(cartX) = '<';
+		}	
+	}
+
+	//cout << endl;
+
+	// Replace rail where carts have crashed
+	for (auto cart : *carts) {
+		int cartX = get<0>(*cart);
+		int cartY = get<1>(*cart);
+		char currentRail = get<5>(*cart);
+		if (get<4>(*cart) && currentRail != '^' && currentRail != '>' && currentRail != 'v' && currentRail != '<') { //Only the cart that got to crash location first has the underlying rail stored
+			map.at(cartY)->at(cartX) = get<5>(*cart);
+			cout << "replacing cart at" << cartX << " " << cartY << " with " << currentRail << endl;
 		}
 	}
-	for (auto cart : (*carts))
-		get<4>(*cart) = false;
-	//cout << endl;
 
 
 	return collisions;
 }
 
-void fourteenth_day_func() {
+void thirteenth_day_func() {
 	ifstream myfile;
 	int test = 0;
+
 	if (test == 0)
 		myfile.open("thirteenth_day_input.txt");
 	else if (test == 1)
@@ -200,11 +206,18 @@ void fourteenth_day_func() {
 		map.push_back(new string{ input });
 	}
 
+	for (auto m : map) {
+		cout << '|' << endl;
+	}system("pause");
 
-	set<tuple<int, int, Turn, Direction, Updated>*, cartComparator>* carts = findCarts(map);
+	/*for (auto m : map) {
+		cout << *m << endl;
+	}system("pause");*/
+
+	set<tuple<int, int, Turn, Direction, Crashed, Rail>*,struct cartComparator>* carts = findCarts(map);
 	cout << carts->size() << endl;;
 
-	vector<tuple<Collision, int, int>*>* collisions;
+	vector<pair< int, int>*>* collisions;
 	int counter = 0;
 	while (carts->size()>1) {
 
@@ -212,32 +225,24 @@ void fourteenth_day_func() {
 		counter++;
 		cout << counter << endl;
 		if (!collisions->empty()) {
-			auto temp = new set<tuple<int, int, Turn, Direction, Updated>*, cartComparator>;
-			for (auto collision : (*collisions)) {
-				for (auto it = carts->rbegin(); it != carts->rend(); ++it) {
-					if (get<1>(*collision) == get<0>(*(*it)) && get<2>(*collision) == get<1>(*(*it))) {
-						tuple<int, int, Turn, Direction, Updated>* test = *it;
-						get<4>(*(*it)) = true;
-					}
-				}
-			}
+			auto temp = new set<tuple<int, int, Turn, Direction, Crashed, Rail>*, struct cartComparator>;
 			for (auto cart : (*carts))
 				if (!get<4>(*cart))
 					temp->insert(cart);
 			delete carts;
 			carts = temp;
 			for (auto collision : (*collisions)) {
-				if (get<0>(*collision)) {
-					cout << "Collision at: " << get<1>(*collision) << ", " << get<2>(*collision) << ". Carts remaining: " << carts->size() << endl;
-
-				}
+				cout << "Collision at: " << collision->first << ", " << collision->second << ". Carts remaining: " << carts->size() << endl;
 			}
 			system("pause");
 		}
+		/*for (auto m : map) {
+			cout << *m << endl;
+		}system("pause");*/
 
 	}
 
 	for (auto cart : (*carts)) {
 		cout << get<0>(*cart) << " " << get<1>(*cart) << endl;
 	}
-}*/
+}

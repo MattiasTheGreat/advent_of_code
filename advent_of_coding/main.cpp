@@ -1,12 +1,3 @@
-#include <iostream>
-#include <fstream>
-#include <map>
-#include <set>
-#include <vector>
-#include <string>
-#include <algorithm>
-#include <array>
-
 #include "first_day.h"
 #include "second_day.h"
 #include "third_day.h"
@@ -21,13 +12,16 @@
 #include "twelfth_day.h"
 #include "thirteenth_day.h"
 #include "fourteenth_day.h"
+#include "fifteenth_day.h"
+#include "seventeenth_day.h"
+#include "eighteenth_day.h"
 
 
 using namespace std;
 
 
 int main() {
-	fifteenth_day_func();
+	seventeenth_day_func();
 
 	
 
